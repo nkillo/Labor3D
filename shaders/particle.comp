@@ -1,0 +1,42 @@
+#version 450
+
+struct particle{
+    vec2 pos;
+    vec2 vel;
+    vec4 col;
+};
+
+layout (binding = 0) uniform ParameterUBO{
+    float deltaTime;
+}ubo;
+
+layout(std140, binding = 1) readonly buffer ParticleSSBOIn{
+    particle particlesIn[ ];
+};
+
+layout(std140, binding = 2) buffer ParticleSSBOOut{
+    particle particlesOut[ ];
+};
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main(){
+    uint index = gl_GlobalInvocationID.x;
+
+    particle particleIn = particlesIn[index];
+
+    particlesOut[index].pos = particleIn.pos + particleIn.vel.xy * ubo.deltaTime;
+    // particlesOut[index].pos = particleIn.pos + particleIn.vel.xy * 1.16;
+    particlesOut[index].vel = particleIn.vel;
+
+    //flip movement at window barrier
+    if((particlesOut[index].pos.x <= -1.0) || (particlesOut[index].pos.x >= 1.0)){
+        particlesOut[index].vel.x = -particlesOut[index].vel.x;
+    }
+    if((particlesOut[index].pos.y <= -1.0) || (particlesOut[index].pos.y >= 1.0)){
+        particlesOut[index].vel.y = -particlesOut[index].vel.y;
+    }
+
+
+}
+
